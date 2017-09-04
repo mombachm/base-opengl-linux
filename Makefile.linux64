@@ -1,0 +1,17 @@
+BIN = bin
+CC = gcc
+FLAGS = -Wall -pedantic
+INC = -I common/include
+LOC_LIB = common/linux_x86_64/libGLEW.a -lglfw
+SYS_LIB = -lGL -lm
+SRC = main.cpp
+STD = -std=c++0x -lstdc++
+
+all:
+	@echo
+	@echo ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	@echo ~~~~~~~~~~~~~~~~~~~~~~~~~~~Building GNU/LINUX 64-bit~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	@echo ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	@echo
+	${CC} ${FLAGS} -o ${BIN} ${SRC} ${INC} ${LOC_LIB} ${SYS_LIB} ${STD}
+
