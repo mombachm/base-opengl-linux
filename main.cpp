@@ -1,7 +1,3 @@
-/* 
-*	Base project OpenGL Linux
-*/
-
 #include <iostream>
 #include <string>
 #include <assert.h>
@@ -9,10 +5,13 @@
 using namespace std;
 
 // GLEW
-//#include "gl_utils.h"
-#include <GL/glew.h>		/* include GLEW and new version of GL on Windows */
-#include <GLFW/glfw3.h> /* GLFW helper library */
+#include <GL/glew.h>
 
+// GLFW
+#include <GLFW/glfw3.h>
+
+//Class to handle shader files
+#include "shader.h"
 
 // Function prototypes
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mode);
@@ -20,25 +19,21 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 // Window dimensions
 const GLuint WIDTH = 800, HEIGHT = 600;
 
-// Shaders
-const GLchar* vertexShaderSource = "#version 310 es\n"
-"precision mediump float;"
-"layout(location = 0) in vec3 aPos;\n"
-"layout(location = 1) in vec3 aColor;\n"
-"out vec3 ourColor;\n"
-"void main()\n"
-"{\n"
-"gl_Position = vec4(aPos, 1.0);\n"
-"ourColor = aColor;\n"
-"}\0";
-const GLchar* fragmentShaderSource ="#version 310 es\n"
-"precision mediump float;"
-"out vec4 FragColor;\n"
-"in vec3 ourColor;\n"
-"void main()\n"
-"{\n"
-"FragColor = vec4(ourColor, 1.0);\n"
-"}\0";
+const float DEG2RAD = 3.14159 / 180;
+void drawCircle(float radius)
+{
+	glBegin(GL_LINE_LOOP);
+	for (int i = 0; i < 360; i++)
+	{
+		if (i % 20 == 0) {
+			float degInRad = i*DEG2RAD;
+			//glVertex2f(cos(degInRad)*radius, sin(degInRad)*radius);
+			glDrawArrays(GL_TRIANGLES, 0, 6);
+		}
+	}
+	glEnd();
+}
+
 
 // The MAIN function, from here we start the application and run the game loop
 int main()
@@ -69,52 +64,18 @@ int main()
 	glfwGetFramebufferSize(window, &width, &height);
 	glViewport(0, 0, width, height);
 
-
-	// Build and compile our shader program
-	// Vertex shader
-	GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
-	glShaderSource(vertexShader, 1, &vertexShaderSource, NULL);
-	glCompileShader(vertexShader);
-	// Check for compile time errors
-	GLint success;
-	GLchar infoLog[512];
-	glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success);
-	if (!success)
-	{
-		glGetShaderInfoLog(vertexShader, 512, NULL, infoLog);
-		std::cout << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n" << infoLog << std::endl;
-	}
-	// Fragment shader
-	GLuint fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-	glShaderSource(fragmentShader, 1, &fragmentShaderSource, NULL);
-	glCompileShader(fragmentShader);
-	// Check for compile time errors
-	glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &success);
-	if (!success)
-	{
-		glGetShaderInfoLog(fragmentShader, 512, NULL, infoLog);
-		std::cout << "ERROR::SHADER::FRAGMENT::COMPILATION_FAILED\n" << infoLog << std::endl;
-	}
-	// Link shaders
-	GLuint shaderProgram = glCreateProgram();
-	glAttachShader(shaderProgram, vertexShader);
-	glAttachShader(shaderProgram, fragmentShader);
-	glLinkProgram(shaderProgram);
-	// Check for linking errors
-	glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
-	if (!success) {
-		glGetProgramInfoLog(shaderProgram, 512, NULL, infoLog);
-		std::cout << "ERROR::SHADER::PROGRAM::LINKING_FAILED\n" << infoLog << std::endl;
-	}
-	glDeleteShader(vertexShader);
-	glDeleteShader(fragmentShader);
-
+	//Load and build shader files
+	Shader shader("shaders/vertexShader.vs", "shaders/fragmentShader.fs");
 
 	// Set up vertex data (and buffer(s)) and attribute pointers
 	GLfloat vertices[] = {
-		-0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 1.0f,// Left  
-		0.5f, -0.5f, 0.0f,  0.0f, 1.0f, 0.0f,// Right 
-		0.0f,  0.5f, 0.0f,  1.0f, 0.0f, 0.0f// Top   
+		0.0f, -0.5f, 0.0f, 1.0f, 0.0f, 1.0f,// Left  
+		1.0f, -0.5f, 0.0f,  0.0f, 1.0f, 0.0f,// Right 
+		0.5f,  0.5f, 0.0f,  1.0f, 0.0f, 0.0f,// Top   
+
+		-1.0f, -0.5f, 0.0f, 1.0f, 0.0f, 1.0f,// Left  
+		0.0f, -0.5f, 0.0f,  0.0f, 1.0f, 0.0f,// Right 
+		-0.5f,  0.5f, 0.0f,  1.0f, 0.0f, 0.0f// Top   
 	};
 
 	GLuint VBO, VAO;
@@ -134,7 +95,7 @@ int main()
 	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), (GLvoid*)(3 * sizeof(float)));
 	glEnableVertexAttribArray(1);
 
-	
+
 
 	// Game loop
 	while (!glfwWindowShouldClose(window))
@@ -148,9 +109,10 @@ int main()
 		glClear(GL_COLOR_BUFFER_BIT);
 
 		// Draw our first triangle
-		glUseProgram(shaderProgram);
+		shader.use();
 		glBindVertexArray(VAO);
-		glDrawArrays(GL_TRIANGLES, 0, 3);
+		glDrawArrays(GL_TRIANGLES, 0, 6);
+		//drawCircle(1.0);
 		glBindVertexArray(0);
 
 		// Swap the screen buffers
